@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Chicago Crime Explorer{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header>
+        <strong>Chicago Crime Explorer</strong>
+        <nav aria-label="Main navigation">
+            <a href="{{ url_for('index', **(dashboard_filters or {})) }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>Dashboard</a>
+            <a href="{{ url_for('records', resource='crimes', **(dashboard_filters or {})) }}" {% if resource == 'crimes' %}aria-current="page"{% endif %}>Crime records</a>
+            <a href="{{ url_for('records', resource='communities') }}" {% if resource == 'communities' %}aria-current="page"{% endif %}>Communities</a>
+            <a href="/api/docs/">API reference</a>
+        </nav>
+    </header>
+    <main id="main">
+        {% for notice in get_flashed_messages() %}
+        <p role="status">{{ notice }}</p>
+        {% endfor %}
+        {% if problem %}
+        <h1>Could not open this page</h1>
+        <p role="alert">{{ problem }}</p>
+        {% for field, messages in (error_fields or {}).items() %}
+        <p>{{ field | replace('_', ' ') | capitalize }} — {{ messages | join(' ') }}</p>
+        {% endfor %}
+        <a href="{{ url_for('index') }}">Go to dashboard</a>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

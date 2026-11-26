@@ -1,0 +1,24 @@
+<label>Year
+    <select name="year">
+        <option value="">All years</option>
+        {% for year in options.years %}
+        <option value="{{ year }}" {% if filters.get('year') == year %}selected{% endif %}>{{ year }}</option>
+        {% endfor %}
+    </select>
+</label>
+<label>Offence category
+    <select name="category">
+        <option value="">All categories</option>
+        {% for category in options.categories %}
+        <option {% if filters.get('category') == category %}selected{% endif %}>{{ category }}</option>
+        {% endfor %}
+    </select>
+</label>
+<label>Community
+    <select name="community_code">
+        <option value="">All communities</option>
+        {% for area in options.communities %}
+        <option value="{{ area.community_code }}" {% if filters.get('community_code') == area.community_code %}selected{% endif %}>{{ area.community_name }}</option>
+        {% endfor %}
+    </select>
+</label>

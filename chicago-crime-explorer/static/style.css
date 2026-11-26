@@ -1,0 +1,30 @@
+body {
+    max-width: 56rem;
+    margin: 1rem auto 3rem;
+    padding: 0 1rem;
+    font: 1rem/1.5 "Segoe UI", Arial, sans-serif;
+    color: #222;
+    background: white;
+}
+
+header { border-bottom: 1px solid #bbb; padding-bottom: .5rem; }
+a { color: #174a75; }
+nav a, p a, td a { margin-right: .75rem; }
+nav a[aria-current="page"] { font-weight: bold; }
+h2 { margin-top: 2rem; }
+h3 { margin-bottom: .25rem; }
+p { margin: .6rem 0; }
+fieldset { min-width: 0; margin: .75rem 0; padding: .6rem; }
+label { display: inline-block; max-width: 100%; margin: .25rem .75rem .5rem 0; }
+input, select, button { font: inherit; }
+input, select { display: block; max-width: 100%; box-sizing: border-box; }
+details { margin: .5rem 0; }
+summary, button { cursor: pointer; }
+form[method="post"] label { display: block; }
+form[method="post"] input, form[method="post"] select { width: min(100%, 28rem); }
+img { display: block; width: min(100%, 36rem); height: auto; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; }
+th, td { border: 1px solid #bbb; padding: .3rem .6rem; text-align: left; }
+[role="alert"] { color: #842222; }
+.skip-link:not(:focus) { position: absolute; left: -10000px; }

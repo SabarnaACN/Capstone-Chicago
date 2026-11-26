@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% set is_crime = resource == 'crimes' %}
+{% set label = 'crime record' if is_crime else 'community' %}
+{% set action = 'Delete' if deleting else 'Edit' if record else 'Add' %}
+{% block title %}{{ action }} {{ label }} · Chicago Crime Explorer{% endblock %}
+
+{% macro value(name, default='') -%}
+    {{ values.get(name, default) if values.get(name, default) is not none else '' }}
+{%- endmacro %}
+
+{% macro lookup(name, title, rows, key, description='', required=false) %}
+<label>{{ title }}
+    <select name="{{ name }}" {% if required %}required{% endif %}>
+        <option value="">{{ 'Choose an option' if required else 'Unspecified' }}</option>
+        {% for row in rows %}
+        <option value="{{ row[key] }}" {% if row[key] | string == values.get(name) | string %}selected{% endif %}>
+            {{ row[description] if description else row[key] }}
+            {% if name == 'iucr_code' %} · {{ row.primary_type }} · {{ row.description }}{% endif %}
+        </option>
+        {% endfor %}
+    </select>
+</label>
+{% endmacro %}
+
+{% block content %}
+<h1>{{ action }} {{ label }}</h1>
+{% if message %}
+<p role="alert">{{ message }}</p>
+{% endif %}
+{% if errors %}
+<ul>
+    {% for field, messages in errors.items() %}
+    <li>{{ field | replace('_', ' ') | capitalize }} — {{ messages | join(' ') }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if deleting %}
+        <p>Delete <strong>{{ record.case_number if is_crime else record.community_name }}</strong>?</p>
+    {% elif is_crime %}
+        <label>Case number <input name="case_number" value="{{ value('case_number') }}" maxlength="32" required></label>
+        <label>Incident date <input name="date" type="date" value="{{ value('date') }}" required></label>
+        {{ lookup('iucr_code', 'Offence code', options.offences, 'iucr_code', required=true) }}
+        {{ lookup('community_code', 'Community', options.communities, 'community_code', 'community_name', required=true) }}
+        {% for name, title in [('arrest', 'Arrest recorded'), ('domestic', 'Domestic related')] %}
+        {% set flag = values.get(name) | string | lower %}
+        <label>{{ title }}
+            <select name="{{ name }}">
+                <option value="">Unknown</option>
+                <option value="true" {% if flag in ['1', 'true'] %}selected{% endif %}>Yes</option>
+                <option value="false" {% if flag in ['0', 'false'] %}selected{% endif %}>No</option>
+            </select>
+        </label>
+        {% endfor %}
+        <label>Block <input name="block" value="{{ value('block') }}" maxlength="120"></label>
+        <label>Location description <input name="location_desc" value="{{ value('location_desc', 'UNKNOWN') }}" maxlength="120" required></label>
+        <details {% if errors %}open{% endif %}>
+            <summary>Additional incident details</summary>
+            {{ lookup('district_code', 'Police district', options.districts, 'district_code', 'district_name') }}
+            {{ lookup('ward_no', 'Ward', options.wards, 'ward_no') }}
+            {{ lookup('beat_num', 'Police beat', options.beats, 'beat_num') }}
+            <label>Latitude <input name="latitude" type="number" step="any" min="-90" max="90" value="{{ value('latitude') }}"></label>
+            <label>Longitude <input name="longitude" type="number" step="any" min="-180" max="180" value="{{ value('longitude') }}"></label>
+        </details>
+    {% else %}
+        {% if not record %}
+        <label>Community code <input name="community_code" type="number" min="1" value="{{ value('community_code') }}" required></label>
+        {% endif %}
+        <label>Community name <input name="community_name" maxlength="120" value="{{ value('community_name') }}" required></label>
+        <label>Population <input name="population" type="number" min="1" value="{{ value('population') }}" required></label>
+    {% endif %}
+    <p>
+        <button>{{ 'Confirm delete' if deleting else 'Save record' }}</button>
+        <a href="{{ url_for('records', resource=resource, **query) }}">Cancel</a>
+    </p>
+</form>
+{% endblock %}

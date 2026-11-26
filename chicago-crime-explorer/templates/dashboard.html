@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Chicago Crime Explorer{% endblock %}
+
+{% macro chart(kind, description) %}
+<img src="{{ url_for('chart', name=kind, **filters) }}" alt="{{ description }}" width="1008" height="630" loading="lazy">
+{% endmacro %}
+
+{% block content %}
+<h1>Chicago crime dashboard</h1>
+<form method="get">
+    <fieldset>
+        <legend>Filter incidents</legend>
+        {% include "filters.html" %}
+        <details>
+            <summary>Chart options</summary>
+            {% for name, label, options in [
+                ('period', 'Time grouping', [('yearly', 'Year'), ('monthly', 'Month')]),
+                ('ranking', 'Offence ranking', [('categories', 'Top 10'), ('top5', 'Top 5')]),
+                ('arrests', 'Arrests by year', [('arrests', 'Percentage'), ('arrest-counts', 'Count')]),
+                ('areas', 'Community comparison', [('communities', 'Incident count'), ('normalized', 'Per 10,000 residents')])
+            ] %}
+            <label>{{ label }}
+                <select name="{{ name }}">
+                    {% for value, text in options %}
+                    <option value="{{ value }}" {% if choices[name] == value %}selected{% endif %}>{{ text }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            {% endfor %}
+        </details>
+        <button>Apply filters</button>
+        <a href="{{ url_for('index') }}">Reset</a>
+    </fieldset>
+</form>
+
+<p>Showing <strong>{{ stats.total | number }}</strong> of {{ full_total | number }} incidents
+    across {{ stats.categories | length }} offence categories and {{ stats.communities_observed }} communities.
+    {% if stats.known_arrests %}
+    {{ stats.arrests }} of {{ stats.known_arrests }} known arrest flags are marked yes ({{ stats.arrest_percentage | number(1) }}%).
+    {% else %}This selection has no known arrest flags.{% endif %}
+    {% if stats.total %}The dates run from {{ stats.date_min }} to {{ stats.date_max }} ({{ stats.dates_observed }} distinct dates).{% endif %}
+</p>
+<p>
+    <a href="{{ url_for('records', resource='crimes', **filters) }}">View matching records</a>
+    <a href="{{ url_for('record_form', resource='crimes', **filters) }}">Add crime record</a>
+    <a href="{{ url_for('export', kind='report.html', **filters) }}">Download report</a>
+</p>
+<nav aria-label="Dashboard sections">
+    <a href="#trends">Trends and counts</a>
+    <a href="#patterns">Statistical patterns</a>
+    <a href="#tables">Summary tables</a>
+</nav>
+
+<h2 id="trends">Trends and counts</h2>
+<h3>Incidents over time</h3>
+{% if yearly %}
+    {% set busiest = yearly | max(attribute='crime_count') %}
+    <p>{{ busiest.year }} has the highest annual count ({{ busiest.crime_count }}).
+        {% if stats.dates_observed >= 2 %}The two busiest dates account for {{ stats.concentration | number(1) }}% of these incidents.{% endif %}
+    </p>
+{% else %}<p>No incidents match these filters.</p>{% endif %}
+{{ chart(choices.period, 'Incident counts over time') }}
+
+<h3>Most frequent offences</h3>
+{% if stats.total %}<p>{{ stats.top_category | title }} accounts for {{ stats.top_category_pct | number(2) }}% of selected incidents.</p>{% endif %}
+{{ chart(choices.ranking, 'Most frequent offence categories') }}
+
+<h3>Arrests by year</h3>
+<p>Annual percentages use records with a known arrest flag. The <a href="#annual">annual breakdown</a> shows the counts.</p>
+{{ chart(choices.arrests, 'Annual arrest figures') }}
+
+<h3>Month and weekday</h3>
+{% if stats.total %}<p>{{ stats.peak_month }} has the most selected incidents ({{ stats.peak_month_count }}).</p>{% endif %}
+{{ chart('calendar', 'Incident counts by month and weekday') }}
+
+<h3>Community comparison</h3>
+{% if community and community[0].crime_count %}
+<p>{{ community[0].community_name }} has the highest raw count ({{ community[0].crime_count }}).
+    The population view shows sample incidents per 10,000 supplied residents.</p>
+{% else %}<p>No selected incidents have a matching community.</p>{% endif %}
+{{ chart(choices.areas, 'Community incident comparison') }}
+
+<h2 id="patterns">Statistical patterns</h2>
+<h3>Time of day</h3>
+{% if stats.timed_records %}
+<p>{{ stats.timed_records }} selected incidents have a recorded time.</p>
+{% elif stats.total %}
+<p>Insufficient data for an hourly comparison. The selected incidents have dates only.</p>
+{% else %}<p>No incidents match these filters.</p>{% endif %}
+{{ chart('hourly', 'Hourly incident counts or time availability') }}
+
+<h3>Community count outliers</h3>
+<p>The IQR limits are {{ stats.iqr.lower | number(2) }} and {{ stats.iqr.upper | number(2) }}.
+    {% for area in stats.outlier_communities %}{{ area.community_name }} ({{ area.crime_count }}){% if not loop.last %}, {% else %}.{% endif %}
+    {% else %}No community counts fall outside these limits.{% endfor %}
+</p>
+{{ chart('outliers', 'Box plot of community incident counts') }}
+
+<h3>Numeric relationships</h3>
+{% set pair = stats.strongest_correlation %}
+{% if pair %}
+<p>{{ pair.left }} and {{ pair.right | lower }} have the strongest Pearson correlation (r = {{ pair.coefficient | number(2) }}).</p>
+{% else %}<p>There is too little variation to compare two fields.</p>{% endif %}
+{{ chart('correlation', 'Pearson correlation matrix') }}
+
+<h2 id="tables">Summary tables</h2>
+<h3 id="annual">Annual breakdown</h3>
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>Year</th><th>Incidents</th><th>Arrests</th><th>Known flags</th><th>Arrest %</th></tr></thead>
+        <tbody>
+            {% for row in yearly %}
+            <tr>
+                <td>{{ row.year }}</td>
+                <td>{{ row.crime_count }}</td>
+                <td>{{ row.arrest_count }}</td>
+                <td>{{ row.arrest_known_count }}</td>
+                <td>{{ row.arrest_percentage | number(2) }}</td>
+            </tr>
+            {% else %}<tr><td colspan="5">No matching incidents.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h3>Counts and shares by offence</h3>
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>Offence</th><th>Incidents</th><th>Share of selected incidents</th></tr></thead>
+        <tbody>
+            {% for row in categories %}
+            <tr>
+                <td>{{ row.primary_type }}</td>
+                <td>{{ row.crime_count }}</td>
+                <td>{{ row.percentage | number(2) }}%</td>
+            </tr>
+            {% else %}<tr><td colspan="3">No matching offences.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+<p>Counts describe the supplied sample. Its uneven date coverage limits conclusions about citywide crime.</p>
+{% endblock %}
