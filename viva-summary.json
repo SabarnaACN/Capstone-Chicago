@@ -1,0 +1,41 @@
+{
+  "total": 498,
+  "arrests": 124,
+  "known_arrests": 498,
+  "arrest_percentage": 24.9,
+  "top_category": "THEFT",
+  "top_category_pct": 21.08,
+  "peak_month": "May",
+  "concentration": 88.96,
+  "date_min": "01 Jan 2012",
+  "date_max": "04 May 2016",
+  "dates_observed": 46,
+  "communities_observed": 70,
+  "timed_records": 0,
+  "missing_coordinates": 29,
+  "iqr": {
+    "q1": 2.0,
+    "q3": 9.0,
+    "lower": -8.5,
+    "upper": 19.5,
+    "mean": 6.467532467532467,
+    "std": 5.909676009280046,
+    "outliers": 3
+  },
+  "filters": {},
+  "pipeline_run_id": "551016d27b26408fb8790e29297d9b65",
+  "source_sha256": {
+    "chicago_city_community.csv": "049bb76e98b7bc2909a7ae0e216d56769c75e0b862cfa3f713d8c1c03bc400aa",
+    "chicago_district_ps_info.csv": "ea94324e50425b8ded678c5a0b5e51cb62951b832b2ad14370b32d8d82c81e32",
+    "iucr_codes.csv.csv": "658d1d3ac30d9c4b9c705724c5d97fc6d033c1c161358f62a74b871b1fc53c6e",
+    "chicago_police_beat_info.csv": "68acf9651e3030cc6802b2ecc5ab84c34a3897c97b5bb43cdce9572e507f6bd0",
+    "chicago_ward_offices.csv": "61234072564f0030fdacb84d760b527c9782a54c45102f8939801baf91b438c5",
+    "chicago_crime_dataset.csv": "65611151bbc75d6aae4708e8766a810df8b1700f494c8bbaeefbe11e40e2a901"
+  },
+  "limitations": [
+    "A small, uneven historical sample cannot establish a citywide trend.",
+    "No recorded time means no defensible hourly distribution.",
+    "Supplied population has no reference year; per-10,000 figures are not annual rates.",
+    "Arrest flags do not establish conviction, clearance or causality."
+  ]
+}
